@@ -12,5 +12,11 @@ app.use(express.urlencoded({extended:true,limit:"16kb"}));
 app.use(express.static("public"));
 app.use(cookieParser());
 
+//routes importing 
+import userRouter from "./routes/user.routes.js";
+
+app.use("/api/v1/users",userRouter);
+// so this basically creates a link something like http://localhost:8000/api/v1/users/registerUser ... cool isn't it?!
+
 
 export {app};
