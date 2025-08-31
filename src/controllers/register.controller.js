@@ -15,7 +15,7 @@ const registerUser= asyncHandler(async (req,res)=>{
         throw new ApiError(400,"All fields are required")
     }
     //check if the user is already existed
-    const existedUser = User.findOne(
+    const existedUser =await User.findOne(
         {$or :[{username},{email}]}
     )
 
@@ -26,7 +26,11 @@ const registerUser= asyncHandler(async (req,res)=>{
     //handle the files that are uploaded : avatar and coverImage
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImageLocalPath[0]?.path;
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
 
     if(!avatarLocalPath){
         throw new ApiError(400,"avatar is required");
@@ -34,7 +38,7 @@ const registerUser= asyncHandler(async (req,res)=>{
 
     
     const avatar = await uploadOnCloudinary(avatarLocalPath);
-    const converImage = await uploadOnCloudinary(coverImageLocalPath);
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
     if(!avatar){
         throw new ApiError(500,"ERROR IN UPLOADING THE AVATAR. PLEASE RE-UPLOAD");
     }
@@ -44,7 +48,7 @@ const registerUser= asyncHandler(async (req,res)=>{
     const user = await User.create(
         {
             avatar:avatar.url,
-            converImage: converImage?.url || "",
+            coverImage: coverImage?.url || "",
             fullName : fullName,
             email: email,
             username : username.toLowerCase(),
@@ -53,7 +57,7 @@ const registerUser= asyncHandler(async (req,res)=>{
     )
 
     // checking if the database is updated by getting the user from the db without password and refreshtokenz
-    const createdUser = await user.findById(user._id).select("-password -refreshToken");
+    const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
     if(!createdUser){
         throw new ApiError(500,"ERROR IN UPDATING THE USER TO THE DATABASE")
